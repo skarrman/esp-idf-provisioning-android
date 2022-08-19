@@ -140,7 +140,7 @@ public class WiFiConfigActivity extends AppCompatActivity {
     private void goToProvisionActivity(String ssid, String password) {
 
         finish();
-        Intent provisionIntent = new Intent(getApplicationContext(), ProvisionActivity.class);
+        Intent provisionIntent = new Intent(getApplicationContext(), AddCustomDataActivity.class);
         provisionIntent.putExtras(getIntent());
         provisionIntent.putExtra(AppConstants.KEY_WIFI_SSID, ssid);
         provisionIntent.putExtra(AppConstants.KEY_WIFI_PASSWORD, password);

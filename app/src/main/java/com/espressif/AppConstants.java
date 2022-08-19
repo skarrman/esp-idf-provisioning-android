@@ -23,6 +23,7 @@ public class AppConstants {
     public static final String KEY_BLE_DEVICE_NAME_PREFIX = "ble_device_name_prefix";
     public static final String KEY_DEVICE_NAME = "device_name";
     public static final String KEY_STATUS_MSG = "status_msg";
+    public static final String KEY_CUSTOM_DATA = "custom_data";
     public static final String KEY_WIFI_SSID = "ssid";
     public static final String KEY_WIFI_PASSWORD = "password";
     public static final String KEY_DEVICE_TYPES = "device_types";

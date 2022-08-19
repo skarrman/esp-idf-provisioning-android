@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,6 +30,7 @@ import androidx.core.widget.ContentLoadingProgressBar;
 
 import com.espressif.AppConstants;
 import com.espressif.provisioning.DeviceConnectionEvent;
+import com.espressif.provisioning.listeners.ResponseListener;
 import com.espressif.wifi_provisioning.R;
 import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.ESPProvisionManager;
@@ -37,6 +39,9 @@ import com.espressif.provisioning.listeners.ProvisionListener;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 
 public class ProvisionActivity extends AppCompatActivity {
 
@@ -51,6 +56,7 @@ public class ProvisionActivity extends AppCompatActivity {
     private TextView txtOkBtn;
 
     private String ssidValue, passphraseValue = "";
+    private CustomData[] customDataValues;
     private ESPProvisionManager provisionManager;
     private boolean isProvisioningCompleted = false;
 
@@ -63,13 +69,32 @@ public class ProvisionActivity extends AppCompatActivity {
         Intent intent = getIntent();
         ssidValue = intent.getStringExtra(AppConstants.KEY_WIFI_SSID);
         passphraseValue = intent.getStringExtra(AppConstants.KEY_WIFI_PASSWORD);
+        customDataValues = (CustomData[]) intent.getSerializableExtra(AppConstants.KEY_CUSTOM_DATA);
         provisionManager = ESPProvisionManager.getInstance(getApplicationContext());
         initViews();
         EventBus.getDefault().register(this);
 
         Log.d(TAG, "Selected AP -" + ssidValue);
         showLoading();
+        sendCustomData();
         doProvisioning();
+    }
+
+    public static class CustomData implements Serializable {
+        private String key, value;
+
+        public CustomData(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 
     @Override
@@ -137,6 +162,33 @@ public class ProvisionActivity extends AppCompatActivity {
 
         txtOkBtn.setText(R.string.btn_ok);
         btnOk.setOnClickListener(okBtnClickListener);
+    }
+
+    private void sendCustomData() {
+        Toast.makeText(getApplicationContext(), "Sending custom data", Toast.LENGTH_LONG).show();
+        for (CustomData data : customDataValues) {
+            provisionManager.getEspDevice().sendDataToCustomEndPoint(data.getKey(), data.getValue().getBytes(StandardCharsets.UTF_8), new ResponseListener() {
+                @Override
+                public void onSuccess(byte[] returnData) {
+                    runOnUiThread(() -> {
+                        String data = new String(returnData);
+                        Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(getApplicationContext(), "Failed when sending custom data", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Log.e("sendCustomData", "Error when waiting sleeping thread", e);
+            }
+        }
     }
 
     private void doProvisioning() {
